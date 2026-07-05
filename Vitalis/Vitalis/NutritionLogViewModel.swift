@@ -120,7 +120,11 @@ public final class NutritionLogViewModel {
     }
     
     public func removeItem(at offsets: IndexSet) {
-        items.remove(atOffsets: offsets)
+        for index in offsets.sorted().reversed() {
+            if index < items.count {
+                items.remove(at: index)
+            }
+        }
         if items.isEmpty {
             isBarcodeMethod = false
         }
