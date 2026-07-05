@@ -53,7 +53,7 @@ struct TodayView: View {
                             // Sign Out
                             Button(action: {
                                 withAnimation {
-                                    Swift.Task { try? await viewModel.authRepository.signOut() }
+                                    _Concurrency.Task { try? await viewModel.authRepository.signOut() }
                                 }
                             }) {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
