@@ -1,7 +1,6 @@
 import SwiftUI
 import AuthenticationServices
 import VitalisCore
-import VitalisNetworking
 import VitalisPersistence
 
 struct OnboardingView: View {
@@ -200,9 +199,7 @@ private struct OnboardingViewPreviewContainer: View {
     init() {
         let auth = AuthRepository()
         let moodRepo = MoodRepository(authRepository: auth)
-        let syncEngine = SyncEngine(authRepository: auth)
-        moodRepo.setSyncEngine(syncEngine)
-        self.vm = DashboardViewModel(authRepository: auth, moodRepository: moodRepo, syncEngine: syncEngine)
+        self.vm = DashboardViewModel(authRepository: auth, moodRepository: moodRepo)
     }
     
     var body: some View {

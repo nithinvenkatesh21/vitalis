@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5C0B2DFC2FF9F09500EF79C5 /* VitalisPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2DFB2FF9F09500EF79C5 /* VitalisPersistence */; };
-		5C0B2DFF2FF9F0BA00EF79C5 /* VitalisNetworking in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2DFE2FF9F0BA00EF79C5 /* VitalisNetworking */; };
+
 		5C0B2E022FF9F0CE00EF79C5 /* VitalisCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2E012FF9F0CE00EF79C5 /* VitalisCore */; };
 		5C0B2E052FF9F0D200EF79C5 /* VitalisHealthKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2E042FF9F0D200EF79C5 /* VitalisHealthKit */; };
 /* End PBXBuildFile section */
@@ -32,7 +32,7 @@
 			files = (
 				5C0B2E022FF9F0CE00EF79C5 /* VitalisCore in Frameworks */,
 				5C0B2DFC2FF9F09500EF79C5 /* VitalisPersistence in Frameworks */,
-				5C0B2DFF2FF9F0BA00EF79C5 /* VitalisNetworking in Frameworks */,
+
 				5C0B2E052FF9F0D200EF79C5 /* VitalisHealthKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,7 +77,7 @@
 			name = Vitalis;
 			packageProductDependencies = (
 				5C0B2DFB2FF9F09500EF79C5 /* VitalisPersistence */,
-				5C0B2DFE2FF9F0BA00EF79C5 /* VitalisNetworking */,
+
 				5C0B2E012FF9F0CE00EF79C5 /* VitalisCore */,
 				5C0B2E042FF9F0D200EF79C5 /* VitalisHealthKit */,
 			);
@@ -111,7 +111,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				5C0B2DFA2FF9F09500EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisPersistence" */,
-				5C0B2DFD2FF9F0BA00EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisNetworking" */,
+
 				5C0B2E002FF9F0CE00EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisCore" */,
 				5C0B2E032FF9F0D200EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisHealthKit" */,
 			);
@@ -396,10 +396,7 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/VitalisPersistence;
 		};
-		5C0B2DFD2FF9F0BA00EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisNetworking" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Packages/VitalisNetworking;
-		};
+
 		5C0B2E002FF9F0CE00EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/VitalisCore;
@@ -415,10 +412,7 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = VitalisPersistence;
 		};
-		5C0B2DFE2FF9F0BA00EF79C5 /* VitalisNetworking */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = VitalisNetworking;
-		};
+
 		5C0B2E012FF9F0CE00EF79C5 /* VitalisCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VitalisCore;
