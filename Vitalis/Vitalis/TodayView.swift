@@ -55,8 +55,7 @@ struct TodayView: View {
             let moodRepo = MoodRepository(authRepository: viewModel.authRepository)
             let vm = DashboardViewModel(
                 authRepository: viewModel.authRepository,
-                moodRepository: moodRepo,
-                syncEngine: viewModel.readinessRepository as! ReadinessRepository == nil ? SyncEngine(authRepository: viewModel.authRepository) : (viewModel.readinessRepository as! ReadinessRepository).readinessScorePublisher.compactMap { $0 }.sink { _ in } as? SyncEngine ?? SyncEngine(authRepository: viewModel.authRepository) // Safe fallback
+                moodRepository: moodRepo
             )
             DashboardView(viewModel: vm)
         }
@@ -85,19 +84,6 @@ struct TodayView: View {
                     .foregroundStyle(.white)
             }
             Spacer()
-            
-            // Sign Out
-            Button(action: {
-                withAnimation {
-                    viewModel.signOut()
-                }
-            }) {
-                Image(systemName: "rectangle.portrait.and.arrow.right")
-                    .foregroundColor(.red)
-                    .padding(8)
-                    .background(Color.red.opacity(0.1))
-                    .clipShape(Circle())
-            }
         }
         .padding(.horizontal)
         .padding(.top, 10)

@@ -2,14 +2,12 @@ import Foundation
 import Combine
 import Observation
 import VitalisCore
-import VitalisNetworking
 import VitalisPersistence
 
 @Observable
 public final class DashboardViewModel {
     public let authRepository: AuthRepositoryProtocol
     public let moodRepository: MoodRepositoryProtocol
-    public let syncEngine: SyncEngine
     
     public var currentUser: User? = nil
     public var moodEntries: [MoodEntry] = []
@@ -20,24 +18,16 @@ public final class DashboardViewModel {
     
     public init(
         authRepository: AuthRepositoryProtocol,
-        moodRepository: MoodRepositoryProtocol,
-        syncEngine: SyncEngine
+        moodRepository: MoodRepositoryProtocol
     ) {
         self.authRepository = authRepository
         self.moodRepository = moodRepository
-        self.syncEngine = syncEngine
         
         // Listen to auth changes
         authRepository.currentUserPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] user in
                 self?.currentUser = user
-                if user != nil {
-                    // Try to sync on login
-                    Task {
-                        try? await moodRepository.syncWithRemote()
-                    }
-                }
             }
             .store(in: &cancellables)
             
@@ -94,31 +84,20 @@ public final class DashboardViewModel {
         }
     }
     
-    public func signOut() {
-        Task {
-            try? await authRepository.signOut()
-        }
-    }
-    
-    #if DEBUG
-    /// Gated mock logins for User A and User B.
-    /// Uses static deterministic UUID seeds to ensure User A and User B are consistent across runs/devices.
-    public func loginMockUser(name: String) {
+    public func loginLocalUser() {
         isLoading = true
         errorMessage = nil
         
-        let uuidSeed = name == "User A" 
-            ? UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")! 
-            : UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!
-            
+        let localUserId = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+        
         Task {
             do {
-                _ = try await authRepository.signInMock(userId: uuidSeed, displayName: name)
+                _ = try await authRepository.signInMock(userId: localUserId, displayName: "Local User")
                 await MainActor.run {
                     self.isLoading = false
                 }
             } catch {
-                print("DEBUG: loginMockUser failed with error: \(error)")
+                print("DEBUG: loginLocalUser failed with error: \(error)")
                 await MainActor.run {
                     self.isLoading = false
                     self.errorMessage = error.localizedDescription
@@ -126,5 +105,4 @@ public final class DashboardViewModel {
             }
         }
     }
-    #endif
 }

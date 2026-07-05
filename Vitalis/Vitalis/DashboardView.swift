@@ -28,20 +28,6 @@ struct DashboardView: View {
                         }
                         
                         Spacer()
-                        
-                        // Sign Out Button
-                        Button(action: {
-                            withAnimation {
-                                viewModel.signOut()
-                            }
-                        }) {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.system(size: 18))
-                                .foregroundColor(.red)
-                                .padding(10)
-                                .background(Color.red.opacity(0.1))
-                                .clipShape(Circle())
-                        }
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -126,7 +112,7 @@ struct DashboardView: View {
                                 .font(.headline)
                                 .foregroundColor(.gray)
                             
-                            Text("Tap the button above to log a new entry locally. It will automatically queue and sync to Supabase.")
+                            Text("Tap the button above to log a new entry locally.")
                                 .font(.caption)
                                 .foregroundColor(.gray.opacity(0.7))
                                 .multilineTextAlignment(.center)
@@ -201,28 +187,7 @@ struct MoodRow: View {
                     }
                 }
             }
-            
             Spacer()
-            
-            // Sync status indicator
-            if entry.isSynced {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.system(size: 16))
-            } else {
-                HStack(spacing: 4) {
-                    Text("Pending")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(.orange)
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(.orange)
-                        .font(.system(size: 12))
-                }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(6)
-            }
         }
         .padding(.vertical, 4)
     }

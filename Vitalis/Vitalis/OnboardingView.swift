@@ -63,7 +63,7 @@ struct OnboardingView: View {
                 // Onboarding Info Cards
                 VStack(alignment: .leading, spacing: 16) {
                     InfoRow(icon: "lock.shield.fill", title: "Privacy First", description: "Your data is encrypted and completely under your control.")
-                    InfoRow(icon: "arrow.triangle.2.circlepath", title: "Offline Sync", description: "Log data offline. It automatically syncs when you reconnect.")
+                    InfoRow(icon: "arrow.triangle.2.circlepath", title: "100% On-Device", description: "All data is persisted locally in a sandboxed SwiftData database.")
                 }
                 .padding(.horizontal, 30)
                 .opacity(animateItems ? 1.0 : 0.0)
@@ -81,80 +81,21 @@ struct OnboardingView: View {
                             .padding(.horizontal, 30)
                     }
                     
-                    // Sign in with Apple Button
-                    SignInWithAppleButton(
-                        onRequest: { request in
-                            request.requestedScopes = [.fullName, .email]
-                        },
-                        onCompletion: { _ in
-                            // Apple Sign In Success
+                    Button(action: {
+                        withAnimation {
+                            viewModel.loginLocalUser()
                         }
-                    )
-                    .signInWithAppleButtonStyle(.white)
-                    .frame(height: 50)
-                    .cornerRadius(12)
-                    .padding(.horizontal, 30)
-                    
-                    #if DEBUG
-                    // Compile-time Gated Mock Authentications
-                    VStack(spacing: 8) {
-                        Text("Debug Mock Sign-In")
-                            .font(.caption2)
-                            .foregroundStyle(.gray)
-                            .padding(.top, 8)
-                        
-                        HStack(spacing: 12) {
-                            Button(action: {
-                                withAnimation {
-                                    viewModel.loginMockUser(name: "User A")
-                                }
-                            }) {
-                                HStack {
-                                    Image(systemName: "person.circle.fill")
-                                    Text("User A")
-                                }
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44)
-                                .background(Color.purple.opacity(0.3))
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.purple.opacity(0.5), lineWidth: 1)
-                                )
-                            }
-                            
-                            Button(action: {
-                                withAnimation {
-                                    viewModel.loginMockUser(name: "User B")
-                                }
-                            }) {
-                                HStack {
-                                    Image(systemName: "person.circle.fill")
-                                    Text("User B")
-                                }
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44)
-                                .background(Color.cyan.opacity(0.3))
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.cyan.opacity(0.5), lineWidth: 1)
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 30)
-                        
-                        Text("Mock User sessions simulate discrete database accounts to verify RLS.")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.gray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
+                    }) {
+                        Text("Get Started")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white)
+                            .cornerRadius(12)
                     }
-                    #endif
+                    .padding(.horizontal, 30)
                 }
                 .padding(.bottom, 30)
                 .opacity(animateItems ? 1.0 : 0.0)

@@ -2,7 +2,6 @@ import Foundation
 import Combine
 import Observation
 import VitalisCore
-import VitalisNetworking
 import VitalisPersistence
 import VitalisHealthKit
 
@@ -80,10 +79,6 @@ public final class TodayViewModel {
         Task {
             errorMessage = nil
             do {
-                // Sync with remote
-                try await readinessRepository.syncWithRemote()
-                try await nutritionRepository.syncWithRemote()
-                
                 // Recompute readiness dynamically from local HealthKit data
                 _ = try await readinessRepository.computeAndSaveReadiness(date: Date())
             } catch {
@@ -115,12 +110,6 @@ public final class TodayViewModel {
                     self.errorMessage = error.localizedDescription
                 }
             }
-        }
-    }
-    
-    public func signOut() {
-        Task {
-            try? await authRepository.signOut()
         }
     }
 }
