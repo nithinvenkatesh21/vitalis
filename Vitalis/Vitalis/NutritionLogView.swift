@@ -260,6 +260,7 @@ struct NutritionLogView: View {
         }
         .disabled(viewModel.items.isEmpty || viewModel.isLoading)
     }
+}
 
 extension View {
     @ViewBuilder
