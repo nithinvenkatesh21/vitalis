@@ -214,8 +214,15 @@ struct WorkoutLogView: View {
                         
                         HStack(spacing: 12) {
                             if let load = set.load {
-                                Text("\(Int(load)) lbs")
-                                    .foregroundColor(.white)
+                                HStack(spacing: 4) {
+                                    Text("\(Int(load)) lbs")
+                                        .foregroundColor(.white)
+                                    if let maxEst = set.estimatedOneRepMax {
+                                        Text("(1RM: \(Int(maxEst)) lbs)")
+                                            .font(.caption2)
+                                            .foregroundColor(.green)
+                                    }
+                                }
                             } else {
                                 Text("Bodyweight")
                                     .foregroundColor(.white)
@@ -267,7 +274,7 @@ struct WorkoutLogView: View {
                     ProgressView().tint(.white)
                 } else {
                     Image(systemName: "checkmark.circle.fill")
-                    Text("Log and Sync Workout")
+                    Text("Log Workout")
                 }
             }
             .fontWeight(.bold)
