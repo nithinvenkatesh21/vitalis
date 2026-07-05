@@ -3,6 +3,7 @@ import Observation
 import VitalisCore
 import VitalisNetworking
 import VitalisPersistence
+import VitalisHealthKit
 
 struct ContentView: View {
     @State private var viewModel: DashboardViewModel
@@ -12,7 +13,7 @@ struct ContentView: View {
         let moodRepository = MoodRepository(authRepository: authRepository)
         let syncEngine = SyncEngine(authRepository: authRepository)
         
-        // Wire dependencies
+        // Wire dependencies for mood
         moodRepository.setSyncEngine(syncEngine)
         
         let vm = DashboardViewModel(
@@ -27,12 +28,27 @@ struct ContentView: View {
     var body: some View {
         Group {
             if viewModel.currentUser != nil {
-                DashboardView(viewModel: viewModel)
+                let healthKitService = HealthKitService()
+                let readinessRepo = ReadinessRepository(authRepository: viewModel.authRepository, healthKitService: healthKitService)
+                let nutritionRepo = NutritionRepository(authRepository: viewModel.authRepository)
+                
+                let syncEngine = SyncEngine(authRepository: viewModel.authRepository)
+                readinessRepo.setSyncEngine(syncEngine)
+                nutritionRepo.setSyncEngine(syncEngine)
+                
+                let todayVM = TodayViewModel(
+                    authRepository: viewModel.authRepository,
+                    readinessRepository: readinessRepo,
+                    nutritionRepository: nutritionRepo,
+                    healthKitService: healthKitService
+                )
+                
+                TodayView(viewModel: todayVM)
             } else {
                 OnboardingView(viewModel: viewModel)
             }
         }
-        .preferredColorScheme(.dark) // Lock to Dark Mode to match Vitalis aesthetic
+        .preferredColorScheme(.dark)
     }
 }
 

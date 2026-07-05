@@ -11,6 +11,9 @@ public final class VitalisDataController {
             UserSD.self,
             MoodEntrySD.self,
             TimelineEventSD.self,
+            MealSD.self,
+            FoodItemSD.self,
+            ReadinessScoreSD.self,
             SyncQueueItem.self
         ])
         

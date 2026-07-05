@@ -13,6 +13,9 @@ final class VitalisPersistenceTests: XCTestCase {
             UserSD.self,
             MoodEntrySD.self,
             TimelineEventSD.self,
+            MealSD.self,
+            FoodItemSD.self,
+            ReadinessScoreSD.self,
             SyncQueueItem.self
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -56,6 +59,64 @@ final class VitalisPersistenceTests: XCTestCase {
         XCTAssertEqual(fetched.first?.id, moodId)
         XCTAssertEqual(fetched.first?.valence, 0.8)
         XCTAssertFalse(fetched.first!.isSynced)
+    }
+    
+    @MainActor
+    func testInsertMealAndFoodItems() {
+        let mealId = UUID()
+        let userId = UUID()
+        let mealSD = MealSD(
+            id: mealId,
+            userId: userId,
+            timestamp: Date(),
+            method: "MANUAL",
+            macrosJSON: "{\"calories\":350}",
+            microsJSON: "{}",
+            isSynced: false
+        )
+        context.insert(mealSD)
+        
+        let itemId = UUID()
+        let foodItemSD = FoodItemSD(
+            id: itemId,
+            name: "Oatmeal",
+            brand: "Quaker",
+            macrosJSON: "{\"calories\":150}",
+            microsJSON: "{}"
+        )
+        foodItemSD.meal = mealSD
+        context.insert(foodItemSD)
+        
+        let mealDescriptor = FetchDescriptor<MealSD>()
+        let fetchedMeals = try! context.fetch(mealDescriptor)
+        
+        XCTAssertEqual(fetchedMeals.count, 1)
+        XCTAssertEqual(fetchedMeals.first?.id, mealId)
+        XCTAssertEqual(fetchedMeals.first?.foodItems?.count, 1)
+        XCTAssertEqual(fetchedMeals.first?.foodItems?.first?.name, "Oatmeal")
+    }
+    
+    @MainActor
+    func testInsertReadinessScore() {
+        let scoreId = UUID()
+        let userId = UUID()
+        let readinessSD = ReadinessScoreSD(
+            id: scoreId,
+            userId: userId,
+            date: Date(),
+            compositeScore: 84.0,
+            componentsJSON: "{\"hrv\":78,\"sleep\":88}",
+            explanationJSON: "[\"Good sleep\", \"HRV matches baseline\"]",
+            isSynced: false
+        )
+        context.insert(readinessSD)
+        
+        let descriptor = FetchDescriptor<ReadinessScoreSD>()
+        let fetched = try! context.fetch(descriptor)
+        
+        XCTAssertEqual(fetched.count, 1)
+        XCTAssertEqual(fetched.first?.id, scoreId)
+        XCTAssertEqual(fetched.first?.compositeScore, 84.0)
     }
     
     @MainActor

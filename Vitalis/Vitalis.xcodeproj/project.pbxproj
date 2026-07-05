@@ -10,6 +10,7 @@
 		5C0B2DFC2FF9F09500EF79C5 /* VitalisPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2DFB2FF9F09500EF79C5 /* VitalisPersistence */; };
 		5C0B2DFF2FF9F0BA00EF79C5 /* VitalisNetworking in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2DFE2FF9F0BA00EF79C5 /* VitalisNetworking */; };
 		5C0B2E022FF9F0CE00EF79C5 /* VitalisCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2E012FF9F0CE00EF79C5 /* VitalisCore */; };
+		5C0B2E052FF9F0D200EF79C5 /* VitalisHealthKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5C0B2E042FF9F0D200EF79C5 /* VitalisHealthKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 				5C0B2E022FF9F0CE00EF79C5 /* VitalisCore in Frameworks */,
 				5C0B2DFC2FF9F09500EF79C5 /* VitalisPersistence in Frameworks */,
 				5C0B2DFF2FF9F0BA00EF79C5 /* VitalisNetworking in Frameworks */,
+				5C0B2E052FF9F0D200EF79C5 /* VitalisHealthKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,6 +79,7 @@
 				5C0B2DFB2FF9F09500EF79C5 /* VitalisPersistence */,
 				5C0B2DFE2FF9F0BA00EF79C5 /* VitalisNetworking */,
 				5C0B2E012FF9F0CE00EF79C5 /* VitalisCore */,
+				5C0B2E042FF9F0D200EF79C5 /* VitalisHealthKit */,
 			);
 			productName = Vitalis;
 			productReference = 5C0B2DE22FF9EF9400EF79C5 /* Vitalis.app */;
@@ -110,6 +113,7 @@
 				5C0B2DFA2FF9F09500EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisPersistence" */,
 				5C0B2DFD2FF9F0BA00EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisNetworking" */,
 				5C0B2E002FF9F0CE00EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisCore" */,
+				5C0B2E032FF9F0D200EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisHealthKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5C0B2DE32FF9EF9400EF79C5 /* Products */;
@@ -400,6 +404,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Packages/VitalisCore;
 		};
+		5C0B2E032FF9F0D200EF79C5 /* XCLocalSwiftPackageReference "../Packages/VitalisHealthKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/VitalisHealthKit;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -414,6 +422,10 @@
 		5C0B2E012FF9F0CE00EF79C5 /* VitalisCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VitalisCore;
+		};
+		5C0B2E042FF9F0D200EF79C5 /* VitalisHealthKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VitalisHealthKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

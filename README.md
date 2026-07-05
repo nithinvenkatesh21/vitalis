@@ -1,6 +1,8 @@
-# Vitalis iOS App — Milestone 1 Development Guide
+# Vitalis iOS App — Development Guide
 
-Welcome to **Vitalis**! This directory contains the complete source code, packages, and database configurations for **Milestone 1** of the Vitalis build plan.
+Welcome to **Vitalis**! This directory contains the complete source code, packages, and database configurations for the iOS application.
+
+---
 
 ## Milestone 1 Goals
 - [x] Configure a real Supabase/Postgres backend.
@@ -10,6 +12,14 @@ Welcome to **Vitalis**! This directory contains the complete source code, packag
 - [x] Sync `MoodEntry` and `TimelineEvent` records as an **atomic, single Postgres transaction** (using Postgres RPC function).
 - [x] Support automatic outbox queue sync on network connection restoration.
 
+## Milestone 2 Goals
+- [x] Extend schema for Nutrition (`meals`, `food_items`) and Readiness (`readiness_scores`).
+- [x] Implement atomic sync Postgres RPC function `log_meal_with_items`.
+- [x] Create local `VitalisHealthKit` package to fetch sleep duration and HRV.
+- [x] Implement client-side Readiness Score algorithm with progressive reweighting on missing sensors.
+- [x] Build Today dashboard showing Readiness ring and Nutrition targets.
+- [x] Build Nutrition Logging UI with manual inputs and simulated barcode scanning.
+
 ---
 
 ## 1. Supabase Project Setup
@@ -18,13 +28,11 @@ Welcome to **Vitalis**! This directory contains the complete source code, packag
    - Go to [Supabase Console](https://database.new) and create a new project.
 2. **Execute Database Migrations**:
    - Navigate to the **SQL Editor** tab in your Supabase dashboard.
-   - Click **New Query**, copy the contents of [backend/schema.sql](file:///Users/nithinvenkatesh/Documents/healthio/vitalis-ios/backend/schema.sql) into the editor, and click **Run**.
-   - Verify that three tables are created: `users`, `mood_entries`, and `timeline_events`.
-   - Verify that the function `log_mood_with_timeline` is present in the database schemas under RPCs.
-3. **Configure Authentication (For native Sign in with Apple in production)**:
-   - Go to **Authentication** -> **Providers** -> **Apple**.
-   - Toggle **Enable Apple provider** and fill in your Apple Developer Details (Team ID, Service ID, Private Key, Key ID).
-   *(Note: For simulator testing, you can use the debug mock login buttons which use Supabase email/password providers under the hood to bypass Apple credential checking on simulators).*
+   - Run the contents of [backend/schema.sql](file:///Users/nithinvenkatesh/Documents/healthio/vitalis-ios/backend/schema.sql) first.
+   - Then, run the contents of [backend/schema_milestone_2.sql](file:///Users/nithinvenkatesh/Documents/healthio/vitalis-ios/backend/schema_milestone_2.sql) to add nutrition tables and RPC functions.
+   - Verify that all tables are created and the RPC functions `log_mood_with_timeline`, `log_meal_with_items`, and `log_readiness_with_timeline` are present.
+3. **Configure Authentication**:
+   - Go to **Authentication** -> **Providers** -> **Apple** to configure production Sign in with Apple, or use the mock sign-in buttons on simulator testing.
 
 ---
 
@@ -33,16 +41,9 @@ Welcome to **Vitalis**! This directory contains the complete source code, packag
 Since we are developing modularly using local packages, you will create a standard SwiftUI Xcode project and link the packages.
 
 1. **Create the Project in Xcode**:
-   - Open Xcode and choose **File** -> **New** -> **Project**.
-   - Choose **iOS** -> **App**. Click Next.
-   - Set **Product Name** to: `Vitalis`.
-   - Set **Organization Identifier** to your domain (e.g. `com.vitalis`).
-   - Set **Interface** to: `SwiftUI`.
-   - Set **Language** to: `Swift`.
-   - Make sure **Storage** is set to `SwiftData`. Click Next.
-   - Choose the target folder to save the project (save it inside `/Users/nithinvenkatesh/Documents/healthio/vitalis-ios`). Make sure it is named `Vitalis`.
+   - Create an iOS App named `Vitalis` using SwiftUI and SwiftData inside the `vitalis-ios` folder.
 2. **Delete Template Boilerplate**:
-   - Inside Xcode, delete the default `ContentView.swift` and `VitalisApp.swift` created by Xcode.
+   - Delete the default `ContentView.swift` and `VitalisApp.swift` created by Xcode.
 3. **Add Existing Files**:
    - Right-click the `Vitalis` folder inside Xcode, select **Add Files to "Vitalis"...**
    - Select the following files from `/Users/nithinvenkatesh/Documents/healthio/vitalis-ios/Vitalis/`:
@@ -51,27 +52,27 @@ Since we are developing modularly using local packages, you will create a standa
      - `DashboardView.swift`
      - `DashboardViewModel.swift`
      - `OnboardingView.swift`
-   - Make sure they are added to the `Vitalis` app target.
+     - `TodayView.swift`
+     - `TodayViewModel.swift`
+     - `NutritionLogView.swift`
+     - `NutritionLogViewModel.swift`
 4. **Link Local Swift Packages**:
-   - Right-click the root project file in Xcode, select **Add Package Dependency...**
-   - Click **Add Local...** button at the bottom.
-   - Navigate to `/Users/nithinvenkatesh/Documents/healthio/vitalis-ios/Packages/` and select:
+   - Right-click the root project in Xcode, select **Add Package Dependency...** -> **Add Local...**
+   - Navigate to `/Users/nithinvenkatesh/Documents/healthio/Packages/` and select:
      - `VitalisCore`
      - `VitalisNetworking`
      - `VitalisPersistence`
-   - Link these libraries to your `Vitalis` main target:
-     - Open the project settings -> Select the **Vitalis** target -> Select **General** tab.
-     - Scroll to **Frameworks, Libraries, and Embedded Content**.
-     - Ensure `VitalisCore`, `VitalisNetworking`, and `VitalisPersistence` are added.
-5. **Configure Entitlements & Background Services**:
-   - Add the **Keychain Sharing** entitlement to allow Supabase Auth sessions to persist across runs.
-   - Make sure your deployment target is set to **iOS 17.0** or later.
+     - `VitalisHealthKit`
+   - Link these four libraries to your **Vitalis** main target under **Frameworks, Libraries, and Embedded Content** in General Settings.
+5. **Configure Entitlements**:
+   - Add **Keychain Sharing** entitlement for Supabase Auth.
+   - Add **HealthKit** entitlement to request read access for Sleep Analysis and Heart Rate Variability.
 
 ---
 
 ## 3. Credentials Configuration
 
-Before building, open [Packages/VitalisNetworking/Sources/VitalisNetworking/SupabaseConfig.swift](file:///Users/nithinvenkatesh/Documents/healthio/vitalis-ios/Packages/VitalisNetworking/Sources/VitalisNetworking/SupabaseConfig.swift) and replace placeholders with your project details:
+Open [Packages/VitalisNetworking/Sources/VitalisNetworking/SupabaseConfig.swift](file:///Users/nithinvenkatesh/Documents/healthio/Packages/VitalisNetworking/Sources/VitalisNetworking/SupabaseConfig.swift) and ensure your credentials are set:
 
 ```swift
 public enum SupabaseConfig {
@@ -82,33 +83,30 @@ public enum SupabaseConfig {
 
 ---
 
-## 4. Verification Checklist
+## 4. Verification Checklists
 
-Follow these steps to manually verify Milestone 1:
+### Milestone 1 Verification
+* **Test 1 (Atomic Linkage)**: Log a Mood entry, verify a row in `mood_entries` and a row in `timeline_events` are inserted with matching linked IDs in a single transaction.
+* **Test 2 (RLS Data Isolation)**: Log in as User A and User B. Verify User B cannot view User A's logs, showing that Row-Level Security isolates data.
+* **Test 3 (Offline Sync Outbox)**: Disconnect Wi-Fi, log a mood, verify it queues locally as "Pending", reconnect, and verify it updates to "Synced" and uploads to Supabase.
 
-### Test 1: Atomic Sync and Timeline Linkage
-1. Run the app in the Simulator.
-2. Use a debug Mock button to sign in as **User A**.
-3. Tap **Log Mood Entry (Test)**.
-4. Open the Supabase SQL editor or Table Editor:
-   - Check the `mood_entries` table: confirm one new row belongs to User A.
-   - Check the `timeline_events` table: confirm one new row was created with type `mood_entry`.
-   - Verify the `linked_entity_ids` column in `timeline_events` contains the UUID of the inserted `mood_entry` row, proving successful atomic linkage.
+### Milestone 2 Verification
 
-### Test 2: RLS Data Isolation
-1. Sign out of **User A**.
-2. Sign in as **User B** on the simulator.
-3. Observe that the dashboard list is completely empty (User B cannot fetch User A's logs).
-4. Tap **Log Mood Entry (Test)** for User B.
-5. Inspect the database: verify that the new entries have User B's UUID.
-6. Verify User B can only see their own entry in the app.
+#### Test 1: HealthKit Progressive Reweighting
+1. In the simulator, open settings and deny HealthKit permissions.
+2. Open Vitalis: verify the Readiness Card displays: *"No HealthKit biometrics available. Enable HealthKit permissions in iOS Settings."* and has a neutral score of 50.
+3. Grant **Sleep only**: Verify the Readiness score is calculated using Sleep duration only, and the explanation shows: *"Sleep was X hours. HRV data missing (reweighted 100% on Sleep)."*
+4. Grant **Sleep and HRV**: Verify both metrics are fetched and the composite score combines them (50% Sleep, 50% HRV).
 
-### Test 3: Offline outbox & Connection Re-establishment
-1. While logged in, disconnect the Xcode simulator from the network (e.g. disable Wi-Fi on the host Mac or disable cellular in Simulator settings).
-2. Tap **Log Mood Entry (Test)**.
-3. Observe the row renders in the list with a badge marked **"Pending"** in orange.
-4. Verify the database in the Supabase console shows no new entries (verifying offline caching).
-5. Turn the network connection back on.
-6. The `NWPathMonitor` triggers `processOutbox()` automatically.
-7. Verify that the row badge transitions to a green checkmark indicating **"Synced"**.
-8. Refresh/check the database: verify the new records exist in Supabase.
+#### Test 2: Barcode Scanning and Contributed Items
+1. Tap **Log Meal** -> enter barcode `0123456789`. Confirm it scans Quaker Oats (150 kcal, 6g protein, 27g carbs, 3g fat).
+2. Enter barcode `5555555555`. Confirm it displays: *"Barcode not found. Enter macro details manually below."*
+3. Enter `"Greek Yogurt"`, `100` cals, `15`g protein, `6`g carbs, `0`g fat. Tap **Add to Plate** and **Log Meal**. Verify the custom food item is logged successfully.
+
+#### Test 3: Atomic Nutrition Sync
+1. Log a meal containing 2 food items.
+2. Inspect your Supabase database:
+   - Verify **one** row was added to `meals`.
+   - Verify **two** rows were added to `food_items` containing the parent `meal_id`.
+   - Verify **one** row was added to `timeline_events` containing the `meal_id` in `linked_entity_ids`.
+3. Put the device offline, log a meal, verify it caches locally as "Pending", restore connection, and verify the meal, items, and event sync atomically.
