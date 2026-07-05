@@ -190,7 +190,8 @@ struct TodayView: View {
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-                .frame(maxWidth: .infinity, height: 40)
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
                 .background(Color.purple.opacity(0.2))
                 .cornerRadius(10)
                 .overlay(
@@ -285,7 +286,8 @@ struct TodayView: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-                .frame(maxWidth: .infinity, height: 48)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
                 .background(Color.blue)
                 .cornerRadius(12)
             }
@@ -300,7 +302,8 @@ struct TodayView: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
-                .frame(maxWidth: .infinity, height: 48)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
                 .background(Color.purple)
                 .cornerRadius(12)
             }
@@ -351,6 +354,10 @@ struct MacroProgressBar: View {
             }
             
             GeometryReader { geo in
+                let ratio = target > 0 ? CGFloat(current / target) : CGFloat(0.0)
+                let calculatedWidth = ratio * geo.size.width
+                let finalWidth = max(CGFloat(0.0), min(geo.size.width, calculatedWidth))
+                
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
                         .fill(Color.white.opacity(0.05))
@@ -358,7 +365,7 @@ struct MacroProgressBar: View {
                     
                     RoundedRectangle(cornerRadius: 3)
                         .fill(color)
-                        .frame(width: max(0.0, min(geo.size.width, CGFloat(current / target) * geo.size.width)), height: 6)
+                        .frame(width: finalWidth, height: 6)
                 }
             }
             .frame(height: 6)

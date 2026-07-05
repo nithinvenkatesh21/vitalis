@@ -162,7 +162,8 @@ struct NutritionLogView: View {
                     .font(.subheadline)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, height: 40)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 40)
                     .background(Color.purple.opacity(0.3))
                     .cornerRadius(10)
                     .overlay(
@@ -262,7 +263,8 @@ struct NutritionLogView: View {
             }
             .fontWeight(.bold)
             .foregroundColor(.white)
-            .frame(maxWidth: .infinity, height: 50)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
             .background(viewModel.items.isEmpty ? Color.gray : Color.blue)
             .cornerRadius(15)
             .padding(.horizontal)
@@ -272,22 +274,24 @@ struct NutritionLogView: View {
     }
 }
 
+#if os(iOS) || os(tvOS) || os(watchOS) || targetEnvironment(macCatalyst)
 extension View {
-    @ViewBuilder
     func numericKeyboard() -> some View {
-        #if os(iOS) || os(tvOS) || os(watchOS) || targetEnvironment(macCatalyst)
         self.keyboardType(.decimalPad)
-        #else
-        self
-        #endif
     }
     
-    @ViewBuilder
     func integerKeyboard() -> some View {
-        #if os(iOS) || os(tvOS) || os(watchOS) || targetEnvironment(macCatalyst)
         self.keyboardType(.numberPad)
-        #else
-        self
-        #endif
     }
 }
+#else
+extension View {
+    func numericKeyboard() -> some View {
+        self
+    }
+    
+    func integerKeyboard() -> some View {
+        self
+    }
+}
+#endif
