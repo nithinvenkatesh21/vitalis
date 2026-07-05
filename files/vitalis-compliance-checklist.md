@@ -54,6 +54,6 @@
 ## 7. Pre-Launch Sign-Off
 
 - [ ] Legal review completed for Sections 3–4 above, specific to launch jurisdictions.
-- [ ] Security audit / penetration test completed on backend API and data-export/deletion flows.
+- [ ] Security audit / validation completed on local Sandboxed storage and data-export/deletion flows.
 - [ ] App Store Connect Privacy Nutrition Label reviewed against actual final data collection (re-check after any late feature changes — this is a common last-mile rejection cause).
 - [ ] Medical/clinical advisor (if available) has reviewed all disease-risk, deficiency-prediction, and lab-interpretation copy for appropriate hedging language.

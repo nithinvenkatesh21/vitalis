@@ -49,7 +49,7 @@ This base prompt is assembled fresh per-request with a **retrieved context block
 
 ## 3. Context Assembly (Retrieval Strategy)
 
-For every Vital interaction, the backend Coach Service assembles a context block *before* calling the model:
+For every Vital interaction, the on-device Coach Manager assembles a context block *before* calling the model:
 
 | Always included | Included if relevant to the query | Never included by default |
 |---|---|---|

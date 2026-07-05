@@ -204,11 +204,13 @@ Vitalis.xcworkspace
 
 ## 13–14. Database Schema & Data Models
 
-**Local persistence:** SwiftData as the primary local store (iOS 17+/18+ target), with CloudKit sync container for cross-device continuity; Core Data escape hatch only if a specific SwiftData limitation is hit (document any such case in Section 20).
+**Local persistence:** SwiftData as the primary local store (iOS 17+/18+ target), using sandboxed SQLite files on the device. Core Data escape hatch only if a specific SwiftData limitation is hit (document any such case in Section 20). There is no external backend database (such as PostgreSQL/Neon/Supabase).
 
-**Backend persistence (server-side, for AI/ML, cross-user features, and durable medical records):** PostgreSQL, schema mirrors the product spec's entity model:
+**Data Schema & Entities:**
+The local SwiftData entities mirror the following schema layout:
 
-```sql
+```swift
+// SwiftData model properties mirror this structured layout:
 users(id, demographics, goals_json, family_group_id, created_at)
 biometric_samples(id, user_id, type, value, unit, timestamp, source_device)
 sleep_sessions(id, user_id, start, end, stages_json, efficiency, latency)
@@ -228,7 +230,8 @@ habits(id, user_id, name, cadence, streak, adherence_model_json)
 timeline_events(id, user_id, timestamp, type, payload_json, linked_entity_ids)  -- universal spine
 family_groups(id, shared_permissions_json)
 ```
-Row-level security enforced per `user_id`; `timeline_events` is denormalized/append-only and is what powers the Timeline screen and cross-feature correlation queries — every write to a domain table triggers a corresponding `timeline_events` insert.
+
+The `timeline_events` table/entity is denormalized/append-only and powers the Timeline screen and cross-feature correlation queries — every write to a domain table triggers a corresponding `timeline_events` insert locally.
 
 ---
 
@@ -270,32 +273,31 @@ Row-level security enforced per `user_id`; `timeline_events` is denormalized/app
 ## 20. AI Architecture
 
 - **On-device (CoreML/Vision):** meal-photo segmentation and portion estimation, workout form-check joint-angle analysis, body-composition photo estimation — chosen on-device specifically for latency and for keeping sensitive imagery off servers by default.
-- **Server-side (LLM + retrieval):** the "Vital" AI Coach — a context-assembly service that pulls the relevant slice of a user's Timeline (recent biometrics, logs, goals) into a retrieval-augmented prompt before each coach interaction, backed by a hosted model (e.g., via the Anthropic API) with function-calling/tool-use to take real actions (reschedule a workout, adjust a meal plan, draft an appointment summary) rather than just returning text.
-- **Predictive models (server-side, periodically retrained per-user):** personalized Readiness Score weighting, glycemic-response prediction, injury-risk scoring, burnout/energy forecasting, deficiency prediction — implemented as lightweight per-user Bayesian/statistical models first (fast to ship, explainable), with room to graduate to learned models once sufficient longitudinal data exists per user.
+- **On-device / Client-side (LLM + retrieval):** the "Vital" AI Coach — a client-side context-assembly system that compiles the relevant slice of the user's local Timeline (recent biometrics, logs, goals) into a retrieval-augmented prompt before each coach interaction, backed by local or privacy-preserving API models with function-calling/tool-use to take real actions (reschedule a workout, adjust a meal plan, draft an appointment summary).
+- **Predictive models (calculated locally on-device):** personalized Readiness Score weighting, glycemic-response prediction, injury-risk scoring, burnout/energy forecasting, deficiency prediction — implemented as lightweight, local Bayesian/statistical models.
 - **Architectural Decision Log:** *(ECC appends entries here as real decisions are made during build — e.g., "Chose SwiftData over CoreData because X; revisit if Y.")*
 
-## 21. Backend Architecture
+## 21. Local Persistence Architecture
 
-- API layer: REST or GraphQL (recommend GraphQL for the Timeline's flexible cross-entity queries) fronting PostgreSQL.
-- Service boundaries mirror feature modules (Nutrition Service, Training Service, Readiness Service, Medical Records Service, AI Coach Service) — independently deployable, communicating via an event bus (mirrors the client-side TimelineEventBus) so the "one timeline" principle holds server-side too.
-- Background job workers for: nightly Readiness recomputation, lab-PDF OCR parsing, medication interaction checks, deficiency/risk model scoring.
-- Object storage (S3-compatible) for documents, lab PDFs, progress photos — encrypted at rest, access-scoped per user.
+- Primary persistence is completely local using **SwiftData** (SQLite database in the app sandbox).
+- Background calculations (e.g., HRV, sleep processing, and Readiness Score recomputation) are processed on-device via standard iOS background tasks.
+- All data imports (such as HealthKit histories, CSV lab records) are parsed and committed directly to the local database container.
+- No backend servers, external GraphQL APIs, or hosted SQL databases are used.
 
 ## 22. Authentication
 
-- Sign in with Apple as the primary/default method (aligns with HIG and App Store review expectations for a health app).
-- Optional email/password + 2FA for cross-platform/family-sharing scenarios.
+- Sign in with Apple as the primary/default method for local user profile creation.
+- Local session credentials stored securely in `UserDefaults` and/or the Keychain.
 - Biometric app-lock (Face ID/Touch ID) as a required gate for the Medical section specifically, configurable to gate the whole app.
-- OAuth-based delegated access for Family/Caregiver mode with granular, revocable permission grants.
+- No external OAuth or server-side authentication databases.
 
 ## 23. Privacy & Security
 
-- Per-category granular sharing permissions (Section 11 of the product spec) enforced at the API layer, not just the UI.
-- End-to-end encryption for medical records/lab documents; standard TLS + at-rest encryption for everything else.
+- Per-category granular sharing permissions (Section 11 of the product spec) enforced in local repositories.
 - On-device processing for sensitive computer vision by default (Section 20).
 - Explicit, separate opt-in toggles for: research data sharing, insurance program integration, any third-party data use — none bundled into a general ToS acceptance.
-- Full data export (structured JSON) and full account/data deletion available in-app, self-service, no support-ticket requirement.
-- Architected to HIPAA-adjacent standards given medical-record storage and clinician-sharing features, even where not strictly legally mandated for a consumer app.
+- Full data export (structured JSON) and full account/data deletion available in-app, self-service, instantly executed locally.
+- Architected to HIPAA-adjacent standards given medical-record storage and local data encryption, even where not strictly legally mandated for a consumer app.
 
 ## 24. Accessibility
 
@@ -305,16 +307,14 @@ Row-level security enforced per `user_id`; `timeline_events` is denormalized/app
 - Reduce Motion / Increase Contrast respected in every custom animation and chart.
 - Cognitive-accessibility "Simple Mode" — reduced choices, larger targets, for elderly/cognitively-impaired users or caregiver-proxy logging.
 
-## 25. Offline Support
+## 25. Local-Only Offline Design
 
-- All logging (meals, workouts, mood, medication) must work fully offline, queued via SwiftData + a sync-outbox pattern, reconciled on reconnect.
-- Readiness Score computable locally from cached HealthKit data even without network, with a "last synced" indicator; server recomputation refines it once online.
-- Conflict resolution: last-write-wins per field with a visible merge indicator for anything the user edited on two devices offline (rare but must be handled, not ignored).
+- The application is 100% server-free and offline-first. All writes and reads access the local SwiftData container directly. No sync outbox or remote database merging is needed, eliminating conflict resolution issues.
+- Readiness Score is computed locally on-device using cached HealthKit data.
 
-## 26. Cloud Synchronization
+## 26. Cloud Synchronization (Removed)
 
-- CloudKit as the default cross-device sync layer for local SwiftData (keeps a user's own devices in sync without server round-trips for personal data).
-- Server sync layer separately handles anything requiring cross-user features (Family, Community) or AI processing (Coach, predictive models) — CloudKit and the backend API are complementary, not redundant.
+- Cloud backup and synchronization are currently out of scope. The database operates entirely within the device sandbox.
 
 ## 27. Premium Features & Monetization Strategy
 

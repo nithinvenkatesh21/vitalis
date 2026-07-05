@@ -10,7 +10,7 @@
 A feature is **not done** until all of the following are true:
 
 **Functional**
-- [ ] Happy path works fully offline (logs locally, syncs when reconnected).
+- [ ] Happy path works fully offline (all logs and calculations run locally on-device).
 - [ ] Works with zero HealthKit permissions granted (degrades gracefully, doesn't crash or block).
 - [ ] Works with zero prior data (empty state is designed, not a blank screen).
 - [ ] Every write path produces a corresponding `TimelineEvent` (ECC Master Prompt §14/§21).
@@ -42,9 +42,8 @@ A feature is **not done** until all of the following are true:
 - HealthKit permission denied or later revoked mid-use (feature should degrade, not error-loop).
 - User has no wearable at all — every "wearable-enhanced" feature needs a phone-only fallback.
 - App backgrounded mid-log (camera capture, workout session) — state must be recoverable.
-- Two devices editing the same day's data offline, then both come online (conflict resolution per ECC Master Prompt §25).
 - Time zone changes mid-session (travel) — dates/streaks must not double-count or skip a day.
-- User revokes a previously-granted permission (Family sharing, HealthKit) — access must be cut immediately, not on next sync.
+- User revokes a previously-granted permission (HealthKit) — access must be cut immediately.
 
 ### Nutrition
 - Camera meal recognition returns low-confidence or no match — must offer manual search, never block logging.
@@ -79,6 +78,5 @@ A feature is **not done** until all of the following are true:
 - A family member revokes shared access — caregiver view must lose access immediately, including cached data on-device.
 - Minor's account reaching age of majority — data-ownership transition flow must exist, not be an afterthought.
 
-### Offline/Sync
-- User logs the same workout twice from two devices while offline — dedup logic must exist before both syncs are accepted.
-- Large data import (bulk HealthKit history on first connect) — must be chunked/background-processed, not block the UI or timeout.
+### Offline & Import
+- Large data import (bulk HealthKit history on first connect) — must be chunked/background-processed on-device, not block the UI.
