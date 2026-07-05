@@ -7,8 +7,6 @@ import VitalisNetworking
 public final class MoodRepository: MoodRepositoryProtocol {
     private let dataController = VitalisDataController.shared
     private let authRepository: AuthRepositoryProtocol
-    private let networkService = MoodNetworkService()
-    
     private let moodEntriesSubject = CurrentValueSubject<[MoodEntry], Never>([])
     private var syncEngine: SyncEngine?
     private var cancellables = Set<AnyCancellable>()
@@ -121,50 +119,7 @@ public final class MoodRepository: MoodRepositoryProtocol {
     }
     
     public func syncWithRemote() async throws {
-        // Fetch remote records and merge
-        guard let currentUser = authRepository.currentUser else { return }
-        
-        let remoteMoods = try await networkService.fetchMoodEntries()
-        
-        await MainActor.run {
-            let context = dataController.mainContext
-            
-            // Merge logic: insert new items from remote that are not present locally
-            for remoteMood in remoteMoods {
-                let remoteId = remoteMood.id
-                let fetchDescriptor = FetchDescriptor<MoodEntrySD>(
-                    predicate: #Predicate { $0.id == remoteId }
-                )
-                
-                do {
-                    let localMatches = try context.fetch(fetchDescriptor)
-                    if localMatches.isEmpty {
-                        // Not present locally, save to cache
-                        let tagsData = try JSONEncoder().encode(remoteMood.tags)
-                        let tagsJSON = String(data: tagsData, encoding: .utf8) ?? "[]"
-                        
-                        let moodSD = MoodEntrySD(
-                            id: remoteMood.id,
-                            userId: remoteMood.userId,
-                            timestamp: remoteMood.timestamp,
-                            valence: remoteMood.valence,
-                            tagsJSON: tagsJSON,
-                            freeText: remoteMood.freeText,
-                            isSynced: true
-                        )
-                        context.insert(moodSD)
-                    } else if let localMatch = localMatches.first, !localMatch.isSynced {
-                        // Mark as synced if it matches remote
-                        localMatch.isSynced = true
-                    }
-                } catch {
-                    print("Error merging remote mood: \(error.localizedDescription)")
-                }
-            }
-            
-            try? context.save()
-            fetchLocalCache()
-        }
+        // Local-only: no remote synchronization needed.
     }
     
     @MainActor

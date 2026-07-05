@@ -13,15 +13,13 @@ let package = Package(
             targets: ["VitalisNetworking"]),
     ],
     dependencies: [
-        .package(path: "../VitalisCore"),
-        .package(url: "https://github.com/supabase-community/supabase-swift.git", from: "2.22.0")
+        .package(path: "../VitalisCore")
     ],
     targets: [
         .target(
             name: "VitalisNetworking",
             dependencies: [
-                .product(name: "VitalisCore", package: "VitalisCore"),
-                .product(name: "Supabase", package: "supabase-swift")
+                .product(name: "VitalisCore", package: "VitalisCore")
             ]),
         .testTarget(
             name: "VitalisNetworkingTests",

@@ -8,8 +8,6 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
     private let dataController = VitalisDataController.shared
     private let authRepository: AuthRepositoryProtocol
     private let healthKitService: HealthKitServiceProtocol
-    private let networkService = ReadinessNetworkService()
-    
     private let readinessScoreSubject = CurrentValueSubject<ReadinessScore?, Never>(nil)
     private var syncEngine: SyncEngine?
     private var cancellables = Set<AnyCancellable>()
@@ -197,47 +195,7 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
     }
     
     public func syncWithRemote() async throws {
-        guard let currentUser = authRepository.currentUser else { return }
-        
-        let remoteScores = try await networkService.fetchReadinessScores()
-        
-        await MainActor.run {
-            let context = dataController.mainContext
-            
-            for remoteScore in remoteScores {
-                let remoteId = remoteScore.id
-                let scoreDate = remoteScore.date
-                let fetchDescriptor = FetchDescriptor<ReadinessScoreSD>(
-                    predicate: #Predicate { $0.userId == currentUser.id && $0.date == scoreDate }
-                )
-                
-                do {
-                    let localMatches = try context.fetch(fetchDescriptor)
-                    if localMatches.isEmpty {
-                        let componentsJSON = String(data: try JSONEncoder().encode(remoteScore.components), encoding: .utf8) ?? "{}"
-                        let explanationJSON = String(data: try JSONEncoder().encode(remoteScore.explanation), encoding: .utf8) ?? "[]"
-                        
-                        let scoreSD = ReadinessScoreSD(
-                            id: remoteScore.id,
-                            userId: remoteScore.userId,
-                            date: remoteScore.date,
-                            compositeScore: remoteScore.compositeScore,
-                            componentsJSON: componentsJSON,
-                            explanationJSON: explanationJSON,
-                            isSynced: true
-                        )
-                        context.insert(scoreSD)
-                    } else if let localMatch = localMatches.first, !localMatch.isSynced {
-                        localMatch.isSynced = true
-                    }
-                } catch {
-                    print("Error merging remote readiness score: \(error.localizedDescription)")
-                }
-            }
-            
-            try? context.save()
-            fetchLocalCache()
-        }
+        // Local-only: no remote synchronization needed.
     }
     
     @MainActor

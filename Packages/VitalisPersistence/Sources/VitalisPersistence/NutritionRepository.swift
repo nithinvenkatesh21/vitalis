@@ -7,8 +7,6 @@ import VitalisNetworking
 public final class NutritionRepository: NutritionRepositoryProtocol {
     private let dataController = VitalisDataController.shared
     private let authRepository: AuthRepositoryProtocol
-    private let networkService = NutritionNetworkService()
-    
     private let mealsSubject = CurrentValueSubject<[Meal], Never>([])
     private var syncEngine: SyncEngine?
     private var cancellables = Set<AnyCancellable>()
@@ -154,64 +152,7 @@ public final class NutritionRepository: NutritionRepositoryProtocol {
     }
     
     public func syncWithRemote() async throws {
-        guard let currentUser = authRepository.currentUser else { return }
-        
-        let remoteMeals = try await networkService.fetchMeals()
-        
-        await MainActor.run {
-            let context = dataController.mainContext
-            
-            for remoteMeal in remoteMeals {
-                let remoteId = remoteMeal.id
-                let fetchDescriptor = FetchDescriptor<MealSD>(
-                    predicate: #Predicate { $0.id == remoteId }
-                )
-                
-                do {
-                    let localMatches = try context.fetch(fetchDescriptor)
-                    if localMatches.isEmpty {
-                        // Not present locally, save to cache
-                        let macrosData = try JSONEncoder().encode(remoteMeal.estimatedMacros)
-                        let macrosJSON = String(data: macrosData, encoding: .utf8) ?? "{}"
-                        
-                        let mealSD = MealSD(
-                            id: remoteMeal.id,
-                            userId: remoteMeal.userId,
-                            timestamp: remoteMeal.timestamp,
-                            method: remoteMeal.method.rawValue,
-                            macrosJSON: macrosJSON,
-                            microsJSON: "{}",
-                            isSynced: true
-                        )
-                        context.insert(mealSD)
-                        
-                        // Insert children
-                        for item in remoteMeal.items {
-                            let itemMacrosData = try JSONEncoder().encode(item.macros)
-                            let itemMacrosJSON = String(data: itemMacrosData, encoding: .utf8) ?? "{}"
-                            
-                            let itemSD = FoodItemSD(
-                                id: item.id,
-                                name: item.name,
-                                brand: item.brand,
-                                macrosJSON: itemMacrosJSON,
-                                microsJSON: "{}",
-                                confidenceScore: item.confidenceScore
-                            )
-                            itemSD.meal = mealSD
-                            context.insert(itemSD)
-                        }
-                    } else if let localMatch = localMatches.first, !localMatch.isSynced {
-                        localMatch.isSynced = true
-                    }
-                } catch {
-                    print("Error merging remote meal: \(error.localizedDescription)")
-                }
-            }
-            
-            try? context.save()
-            fetchLocalCache()
-        }
+        // Local-only: no remote synchronization needed.
     }
     
     @MainActor

@@ -1,15 +1,12 @@
 import Foundation
 import Combine
-import Supabase
 import VitalisCore
 
 public typealias User = VitalisCore.User
 
 public final class AuthRepository: AuthRepositoryProtocol {
-    private let supabase = VitalisSupabaseClient.shared.client
-    
     private let userSubject = CurrentValueSubject<User?, Never>(nil)
-    private var cancellables = Set<AnyCancellable>()
+    private let userDefaultsKey = "vitalis_current_user"
     
     public var currentUser: User? {
         userSubject.value
@@ -20,80 +17,44 @@ public final class AuthRepository: AuthRepositoryProtocol {
     }
     
     public init() {
-        // Observe auth state changes from Supabase
-        Task {
-            for await state in supabase.auth.authStateChanges {
-                if let session = state.session {
-                    let domainUser = self.mapUser(session.user)
-                    self.userSubject.send(domainUser)
-                } else {
-                    self.userSubject.send(nil)
-                }
-            }
+        // Load persisted user session from UserDefaults
+        if let data = UserDefaults.standard.data(forKey: userDefaultsKey),
+           let user = try? JSONDecoder().decode(User.self, from: data) {
+            userSubject.send(user)
         }
     }
     
     public func signInWithApple(idToken: String, nonce: String) async throws -> User {
-        let authResponse = try await supabase.auth.signInWithIdToken(
-            credentials: .init(
-                provider: .apple,
-                idToken: idToken
-            )
+        // Mock Apple login locally: generate or load user
+        let user = User(
+            id: UUID(),
+            displayName: "Apple User",
+            createdAt: Date()
         )
-        let domainUser = mapUser(authResponse.user)
-        userSubject.send(domainUser)
-        return domainUser
+        try saveUser(user)
+        return user
     }
     
     public func signOut() async throws {
-        try await supabase.auth.signOut()
+        UserDefaults.standard.removeObject(forKey: userDefaultsKey)
         userSubject.send(nil)
     }
     
     #if DEBUG
-    /// Mock Authentication for testing on simulators without configuring Apple Developer entitlement.
-    /// Uses email/password or anonymous login to create a real session in Supabase, satisfying RLS.
     public func signInMock(userId: UUID, displayName: String) async throws -> User {
-        let testEmail = "debug_\(userId.uuidString.lowercased())@vitalis.test"
-        let testPassword = "DebugPassword123!"
-        
-        do {
-            // Try to sign in first
-            let authResponse = try await supabase.auth.signIn(
-                email: testEmail,
-                password: testPassword
-            )
-            let domainUser = mapUser(authResponse.user)
-            userSubject.send(domainUser)
-            return domainUser
-        } catch {
-            // If sign in fails, attempt to sign up the test user
-            _ = try await supabase.auth.signUp(
-                email: testEmail,
-                password: testPassword,
-                data: ["display_name": .string(displayName)]
-            )
-            
-            // Try to sign in again after signup
-            let authResponse = try await supabase.auth.signIn(
-                email: testEmail,
-                password: testPassword
-            )
-            let domainUser = mapUser(authResponse.user)
-            userSubject.send(domainUser)
-            return domainUser
-        }
+        let user = User(
+            id: userId,
+            displayName: displayName,
+            createdAt: Date()
+        )
+        try saveUser(user)
+        return user
     }
     #endif
     
-    private func mapUser(_ supabaseUser: Supabase.User) -> User {
-        let displayName = supabaseUser.userMetadata["display_name"] as? String 
-            ?? supabaseUser.email 
-            ?? "User"
-        return User(
-            id: supabaseUser.id,
-            displayName: displayName,
-            createdAt: supabaseUser.createdAt
-        )
+    private func saveUser(_ user: User) throws {
+        let data = try JSONEncoder().encode(user)
+        UserDefaults.standard.set(data, forKey: userDefaultsKey)
+        userSubject.send(user)
     }
 }
