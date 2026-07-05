@@ -28,7 +28,7 @@ struct NutritionLogView: View {
                                         .background(Color.white.opacity(0.05))
                                         .cornerRadius(10)
                                         .foregroundStyle(.white)
-                                        .keyboardType(.numberPad)
+                                        .integerKeyboard()
                                     
                                     Button(action: {
                                         viewModel.simulateBarcodeScan()
@@ -88,22 +88,22 @@ struct NutritionLogView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Calories").font(.caption2).foregroundColor(.gray)
                                         TextField("0", text: $viewModel.itemCalories)
-                                            .keyboardType(.decimalPad)
+                                            .numericKeyboard()
                                     }
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Protein (g)").font(.caption2).foregroundColor(.gray)
                                         TextField("0", text: $viewModel.itemProtein)
-                                            .keyboardType(.decimalPad)
+                                            .numericKeyboard()
                                     }
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Carbs (g)").font(.caption2).foregroundColor(.gray)
                                         TextField("0", text: $viewModel.itemCarbs)
-                                            .keyboardType(.decimalPad)
+                                            .numericKeyboard()
                                     }
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Fat (g)").font(.caption2).foregroundColor(.gray)
                                         TextField("0", text: $viewModel.itemFat)
-                                            .keyboardType(.decimalPad)
+                                            .numericKeyboard()
                                     }
                                 }
                                 .textFieldStyle(.plain)
@@ -229,5 +229,25 @@ struct NutritionLogView: View {
                 }
             }
         }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func numericKeyboard() -> some View {
+        #if os(iOS) || os(tvOS) || os(watchOS) || targetEnvironment(macCatalyst)
+        self.keyboardType(.decimalPad)
+        #else
+        self
+        #endif
+    }
+    
+    @ViewBuilder
+    func integerKeyboard() -> some View {
+        #if os(iOS) || os(tvOS) || os(watchOS) || targetEnvironment(macCatalyst)
+        self.keyboardType(.numberPad)
+        #else
+        self
+        #endif
     }
 }
