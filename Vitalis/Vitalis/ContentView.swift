@@ -6,46 +6,44 @@ import VitalisPersistence
 import VitalisHealthKit
 
 struct ContentView: View {
-    @State private var viewModel: DashboardViewModel
+    @State private var dashboardViewModel: DashboardViewModel
+    @State private var todayViewModel: TodayViewModel
     
     init() {
         let authRepository = AuthRepository()
         let moodRepository = MoodRepository(authRepository: authRepository)
+        let healthKitService = HealthKitService()
+        let readinessRepo = ReadinessRepository(authRepository: authRepository, healthKitService: healthKitService)
+        let nutritionRepo = NutritionRepository(authRepository: authRepository)
+        
         let syncEngine = SyncEngine(authRepository: authRepository)
-        
-        // Wire dependencies for mood
         moodRepository.setSyncEngine(syncEngine)
+        readinessRepo.setSyncEngine(syncEngine)
+        nutritionRepo.setSyncEngine(syncEngine)
         
-        let vm = DashboardViewModel(
+        let dbVM = DashboardViewModel(
             authRepository: authRepository,
             moodRepository: moodRepository,
             syncEngine: syncEngine
         )
         
-        _viewModel = State(initialValue: vm)
+        let tVM = TodayViewModel(
+            authRepository: authRepository,
+            readinessRepository: readinessRepo,
+            nutritionRepository: nutritionRepo,
+            healthKitService: healthKitService
+        )
+        
+        _dashboardViewModel = State(initialValue: dbVM)
+        _todayViewModel = State(initialValue: tVM)
     }
     
     var body: some View {
         Group {
-            if viewModel.currentUser != nil {
-                let healthKitService = HealthKitService()
-                let readinessRepo = ReadinessRepository(authRepository: viewModel.authRepository, healthKitService: healthKitService)
-                let nutritionRepo = NutritionRepository(authRepository: viewModel.authRepository)
-                
-                let syncEngine = SyncEngine(authRepository: viewModel.authRepository)
-                readinessRepo.setSyncEngine(syncEngine)
-                nutritionRepo.setSyncEngine(syncEngine)
-                
-                let todayVM = TodayViewModel(
-                    authRepository: viewModel.authRepository,
-                    readinessRepository: readinessRepo,
-                    nutritionRepository: nutritionRepo,
-                    healthKitService: healthKitService
-                )
-                
-                TodayView(viewModel: todayVM)
+            if dashboardViewModel.currentUser != nil {
+                TodayView(viewModel: todayViewModel)
             } else {
-                OnboardingView(viewModel: viewModel)
+                OnboardingView(viewModel: dashboardViewModel)
             }
         }
         .preferredColorScheme(.dark)
