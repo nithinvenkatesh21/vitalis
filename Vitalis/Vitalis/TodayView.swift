@@ -1,5 +1,6 @@
 import SwiftUI
 import VitalisCore
+import VitalisPersistence
 
 struct TodayView: View {
     @State var viewModel: TodayViewModel
@@ -52,7 +53,7 @@ struct TodayView: View {
                             // Sign Out
                             Button(action: {
                                 withAnimation {
-                                    Task { try? await viewModel.authRepository.signOut() }
+                                    Swift.Task { try? await viewModel.authRepository.signOut() }
                                 }
                             }) {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
