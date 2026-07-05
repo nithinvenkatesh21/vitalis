@@ -117,4 +117,10 @@ public final class TodayViewModel {
             }
         }
     }
+    
+    public func signOut() {
+        Task {
+            try? await authRepository.signOut()
+        }
+    }
 }

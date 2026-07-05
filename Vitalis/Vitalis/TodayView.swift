@@ -53,13 +53,7 @@ struct TodayView: View {
                             // Sign Out
                             Button(action: {
                                 withAnimation {
-                                    _Concurrency.Task {
-                                        do {
-                                            try await viewModel.authRepository.signOut()
-                                        } catch {
-                                            print("Failed to sign out: \(error)")
-                                        }
-                                    }
+                                    viewModel.signOut()
                                 }
                             }) {
                                 Image(systemName: "rectangle.portrait.and.arrow.right")
