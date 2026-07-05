@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import VitalisCore
 import VitalisPersistence
 
@@ -357,7 +358,7 @@ struct MacroProgressBar: View {
                     
                     RoundedRectangle(cornerRadius: 3)
                         .fill(color)
-                        .frame(width: max(0, min(geo.size.width, CGFloat(current / target) * geo.size.width)), height: 6)
+                        .frame(width: max(0.0, min(geo.size.width, CGFloat(current / target) * geo.size.width)), height: 6)
                 }
             }
             .frame(height: 6)
