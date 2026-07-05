@@ -7,6 +7,8 @@ struct TodayView: View {
     @State var viewModel: TodayViewModel
     @State private var showingNutritionLog = false
     @State private var showingMoodDashboard = false
+    @State private var showingWorkoutLog = false
+    @State private var showingTimeline = false
     @State private var animateRing = false
     
     private var readinessColor: Color {
@@ -52,12 +54,17 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showingMoodDashboard) {
             // Reuses the DashboardView from Milestone 1 for Mood Logs
-            let moodRepo = MoodRepository(authRepository: viewModel.authRepository)
-            let vm = DashboardViewModel(
-                authRepository: viewModel.authRepository,
-                moodRepository: moodRepo
-            )
+            let moodRepo = MoodRepository()
+            let vm = DashboardViewModel(moodRepository: moodRepo)
             DashboardView(viewModel: vm)
+        }
+        .sheet(isPresented: $showingWorkoutLog) {
+            let workoutVM = WorkoutLogViewModel(workoutRepository: viewModel.workoutRepository)
+            WorkoutLogView(viewModel: workoutVM)
+        }
+        .sheet(isPresented: $showingTimeline) {
+            let timelineVM = TimelineViewModel(timelineRepository: viewModel.timelineRepository)
+            TimelineView(viewModel: timelineVM)
         }
         .onAppear {
             withAnimation(.easeOut(duration: 1.0)) {
@@ -78,7 +85,7 @@ struct TodayView: View {
                     .tracking(2)
                     .foregroundStyle(.purple)
                 
-                Text(viewModel.currentUser?.displayName ?? "Vitalis User")
+                Text(viewModel.currentUser.displayName)
                     .font(.title2)
                     .fontWeight(.black)
                     .foregroundStyle(.white)
@@ -261,37 +268,73 @@ struct TodayView: View {
     }
     
     private var actionShortcutsSection: some View {
-        HStack(spacing: 16) {
-            Button(action: {
-                showingNutritionLog = true
-            }) {
-                HStack {
-                    Image(systemName: "fork.knife")
-                    Text("Log Meal")
+        VStack(spacing: 14) {
+            HStack(spacing: 14) {
+                Button(action: {
+                    showingNutritionLog = true
+                }) {
+                    HStack {
+                        Image(systemName: "fork.knife")
+                        Text("Log Meal")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.blue)
+                    .cornerRadius(12)
                 }
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(Color.blue)
-                .cornerRadius(12)
+                
+                Button(action: {
+                    showingMoodDashboard = true
+                }) {
+                    HStack {
+                        Image(systemName: "face.smiling")
+                        Text("Mood Logs")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.purple)
+                    .cornerRadius(12)
+                }
             }
             
-            Button(action: {
-                showingMoodDashboard = true
-            }) {
-                HStack {
-                    Image(systemName: "face.smiling")
-                    Text("Mood Timeline")
+            HStack(spacing: 14) {
+                Button(action: {
+                    showingWorkoutLog = true
+                }) {
+                    HStack {
+                        Image(systemName: "dumbbell.fill")
+                        Text("Log Workout")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.red)
+                    .cornerRadius(12)
                 }
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(Color.purple)
-                .cornerRadius(12)
+                
+                Button(action: {
+                    showingTimeline = true
+                }) {
+                    HStack {
+                        Image(systemName: "clock.arrow.circlepath")
+                        Text("History Timeline")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.orange)
+                    .cornerRadius(12)
+                }
             }
         }
         .padding(.horizontal)

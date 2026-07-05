@@ -2,52 +2,33 @@ import Foundation
 import Combine
 import SwiftData
 import VitalisCore
-import VitalisNetworking
 
 public final class ReadinessRepository: ReadinessRepositoryProtocol {
     private let dataController = VitalisDataController.shared
-    private let authRepository: AuthRepositoryProtocol
     private let healthKitService: HealthKitServiceProtocol
     private let readinessScoreSubject = CurrentValueSubject<ReadinessScore?, Never>(nil)
-    private var syncEngine: SyncEngine?
-    private var cancellables = Set<AnyCancellable>()
     
     public var readinessScorePublisher: AnyPublisher<ReadinessScore?, Never> {
         readinessScoreSubject.eraseToAnyPublisher()
     }
     
-    public init(authRepository: AuthRepositoryProtocol, healthKitService: HealthKitServiceProtocol) {
-        self.authRepository = authRepository
+    public init(healthKitService: HealthKitServiceProtocol) {
         self.healthKitService = healthKitService
         
-        // Listen to auth changes to update cache
-        authRepository.currentUserPublisher
-            .sink { [weak self] _ in
-                Task { @MainActor in
-                    self?.fetchLocalCache()
-                }
-            }
-            .store(in: &cancellables)
-    }
-    
-    public func setSyncEngine(_ syncEngine: SyncEngine) {
-        self.syncEngine = syncEngine
+        // Load cache on init
+        Task { @MainActor in
+            self.fetchLocalCache()
+        }
     }
     
     public func getReadinessScore(date: Date) async throws -> ReadinessScore? {
-        // Find in cached subject values
-        let calendar = Calendar.current
         return readinessScoreSubject.value
     }
     
     @MainActor
     public func computeAndSaveReadiness(date: Date) async throws -> ReadinessScore {
-        guard let currentUser = authRepository.currentUser else {
-            throw NSError(domain: "VitalisError", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-        
         let context = dataController.mainContext
-        let userId = currentUser.id
+        let userId = User.defaultId
         
         // 1. Fetch from HealthKit (will gracefully handle missing/denied permissions)
         let hrvValue = try? await healthKitService.fetchHRV(date: date)
@@ -115,7 +96,6 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
             existing.compositeScore = compositeScore
             existing.componentsJSON = componentsJSON
             existing.explanationJSON = explanationJSON
-            existing.isSynced = false
         } else {
             let scoreSD = ReadinessScoreSD(
                 id: readinessId,
@@ -123,8 +103,7 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
                 date: startOfDay,
                 compositeScore: compositeScore,
                 componentsJSON: componentsJSON,
-                explanationJSON: explanationJSON,
-                isSynced: false
+                explanationJSON: explanationJSON
             )
             context.insert(scoreSD)
         }
@@ -147,18 +126,9 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
             timestamp: Date(),
             type: "readiness_score",
             payloadJSON: payloadJSON,
-            linkedEntityIdsJSON: linkedIdsJSON,
-            isSynced: false
+            linkedEntityIdsJSON: linkedIdsJSON
         )
         context.insert(eventSD)
-        
-        // 5. Queue the Pair in the Sync Outbox
-        let queueItem = SyncQueueItem(
-            entityType: "readiness_score",
-            moodId: readinessId, // Reuse moodId field for ReadinessID
-            eventId: eventId
-        )
-        context.insert(queueItem)
         
         try context.save()
         
@@ -176,21 +146,13 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
         )
         TimelineEventBus.shared.publish(domainEvent)
         
-        // Trigger Sync loop
-        if let syncEngine = syncEngine {
-            Task {
-                await syncEngine.processOutbox()
-            }
-        }
-        
         return ReadinessScore(
             id: readinessId,
             userId: userId,
             date: startOfDay,
             compositeScore: compositeScore,
             components: components,
-            explanation: explanation,
-            isSynced: false
+            explanation: explanation
         )
     }
     
@@ -200,13 +162,8 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
     
     @MainActor
     private func fetchLocalCache() {
-        guard let currentUser = authRepository.currentUser else {
-            readinessScoreSubject.send(nil)
-            return
-        }
-        
         let context = dataController.mainContext
-        let currentUserId = currentUser.id
+        let currentUserId = User.defaultId
         
         // Fetch the most recent readiness score for the current user
         let fetchDescriptor = FetchDescriptor<ReadinessScoreSD>(
@@ -229,8 +186,7 @@ public final class ReadinessRepository: ReadinessRepositoryProtocol {
                     date: latestSD.date,
                     compositeScore: latestSD.compositeScore,
                     components: components,
-                    explanation: explanation,
-                    isSynced: latestSD.isSynced
+                    explanation: explanation
                 )
                 readinessScoreSubject.send(domainModel)
             } else {

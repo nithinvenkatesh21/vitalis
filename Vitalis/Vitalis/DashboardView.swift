@@ -17,12 +17,12 @@ struct DashboardView: View {
                                 .font(.caption)
                                 .foregroundStyle(.gray)
                             
-                            Text(viewModel.currentUser?.displayName ?? "Vitalis User")
+                            Text(viewModel.currentUser.displayName)
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundStyle(.white)
                             
-                            Text("ID: \(viewModel.currentUser?.id.uuidString.prefix(8) ?? "")...")
+                            Text("ID: \(viewModel.currentUser.id.uuidString.prefix(8))...")
                                 .font(.system(size: 10, design: .monospaced))
                                 .foregroundStyle(.gray)
                         }

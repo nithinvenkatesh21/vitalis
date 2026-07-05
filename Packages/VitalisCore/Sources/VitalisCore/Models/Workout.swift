@@ -41,3 +41,11 @@ public struct SetLog: Codable, Identifiable, Equatable {
         self.restSeconds = restSeconds
     }
 }
+
+public extension SetLog {
+    var estimatedOneRepMax: Double? {
+        guard let load = load, reps > 0 else { return nil }
+        if reps == 1 { return load }
+        return load * (1.0 + Double(reps) / 30.0)
+    }
+}
